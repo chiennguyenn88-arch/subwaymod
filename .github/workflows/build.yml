@@ -1,0 +1,41 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Unzip project
+      run: |
+        unzip -o ChienMod.zip -d extracted
+        TARGET_DIR=$(find extracted -name "build.gradle" -exec dirname {} \; | head -n 1)
+        if [ -n "$TARGET_DIR" ]; then
+          cp -r $TARGET_DIR/* .
+        fi
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Grant execute permission
+      run: chmod +x gradlew || true
+
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: SubwaySurfers-ModMenu
+        path: app/build/outputs/apk/debug/*.apk
+        
